@@ -1,0 +1,13 @@
+fastapi==0.54.1
+numpy
+utils
+pillow
+uvicorn
+requests
+python-dateutil
+python-multipart
+aiofiles
+SQLAlchemy==1.2.8
+mysql-connector==2.2.9
+passlib
+python-jose

@@ -1,0 +1,15 @@
+FROM ubuntu:18.04
+
+RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get install git curl build-essential nano python3.7-dev python3-pip libsm6 libxext6 libxrender-dev wget -y
+COPY requirements.txt /tmp
+
+WORKDIR /tmp
+RUN python3.7 -m pip install pip --upgrade
+RUN python3.7 -m pip install -r requirements.txt
+RUN mkdir /app
+RUN mkdir /config
+COPY ./app /app
+WORKDIR /app
+EXPOSE 9002
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9002"]
