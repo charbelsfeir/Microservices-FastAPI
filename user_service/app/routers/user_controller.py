@@ -4,6 +4,7 @@ import pathlib
 import shutil
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, status
 from fastapi.security import OAuth2PasswordRequestForm
+from numpy import true_divide
 from starlette.responses import JSONResponse
 from routers.models.models import UserCreateModel, User
 from datetime import datetime
@@ -29,6 +30,15 @@ def get_db():
         db.close()
 
 
+@router.get('/api/test_api', tags=["User"])
+def test_api(userId: int):
+    print(userId, type(userId))
+    return JSONResponse(content={
+        "userId": str(userId),
+        "success": "User Service"
+    })
+
+
 @router.get('/api/create_roles', tags=["User"])
 def create_roles(db: Session = Depends(get_db)):
     db_helper.insert_default_roles(db)
@@ -42,6 +52,9 @@ def create_user(user: UserCreateModel, db: Session = Depends(get_db)):
     return db_helper.create_user(db=db, user=user)
     # result = "Hello and welcome to microservices course"
     # return result
+
+# @router.get('/api/get-create', tags=["User"])
+# def create_get_user():
 
 
 @router.get('/api/profile', tags=["User"])
@@ -63,6 +76,21 @@ def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+@router.get("/api/get-login", tags=["User"])
+def get_login(username: str, password: str, request: Request, db: Session = Depends(get_db)):
+    user = db_helper.authenticate(
+        email=username, password=password, db=db)
+    if not user:
+        raise HTTPException(
+            status_code=400, detail="Incorrect username or password")  # 3
+
+    return {
+        # 4
+        "access_token": db_helper.create_access_token(sub="{0}:{1}".format(user.id, user.role.role_id)),
+        "token_type": "bearer",
+    }
 
 
 @router.post("/api/v1/auth/login", tags=["User"])

@@ -29,6 +29,48 @@ def get_db():
         db.close()
 
 
+@router.get("/api/product/test", tags=["Product"])
+def test(userId: int):
+    print(userId, type(userId))
+    return JSONResponse(content={
+        "userId": str(userId),
+        "success": "Bidding Service"
+    })
+
+
+@router.get('/api/product/get-create', tags=["Product"])
+def get_create_product(name: str, description: str, img_path: str, price: float, request: Request, db: Session = Depends(get_db)):
+    try:
+        token = request.headers.get("Authorization")
+        print(token)
+    except:
+        raise credentials_exception
+    result = requests.get(authentication_url,
+                          headers={'Content-Type': 'application/json',
+                                   'Authorization': '{}'.format(token)})
+
+    print(result.status_code, result.json())
+    if result.status_code == 401:
+        raise credentials_exception
+    elif result.status_code == 200:
+        if result.json()["role"]["name"] == "seller":
+            product = ProductModel(name=name, description=description,
+                                   img_path=img_path, price=price, seller_id=result.json()["id"])
+            product.seller_id = result.json()["id"]
+            prod = db_helper.create_product(db, product)
+            print(prod.__dict__)
+            return {
+                "name": prod.name,
+                "price": prod.price,
+                "seller_id": prod.seller_id,
+                "description": prod.description,
+                "id": prod.id,
+                "img_path": prod.img_path
+            }
+        else:
+            return {"response": "You are not elligible to post products"}
+
+
 @router.post('/api/product/create', tags=["Product"])
 def post_product(product: ProductModel, request: Request, db: Session = Depends(get_db)):
     # print(request.headers.get("Authorization"))
